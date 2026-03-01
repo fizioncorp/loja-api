@@ -4,6 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import productsRoutes from "./routes/products";
 import stockRoutes from "./routes/stock";
+import salesRoutes from "./routes/sales";
+import authRoutes from "./routes/auth";
 
 dotenv.config();
 
@@ -15,6 +17,10 @@ app.use(express.json());
 app.use("/products", productsRoutes);
 
 app.use("/stock", stockRoutes);
+
+app.use("/sales", salesRoutes);
+
+app.use("/auth", authRoutes);
 
 // Rota de teste
 app.get("/health", (req, res) => {

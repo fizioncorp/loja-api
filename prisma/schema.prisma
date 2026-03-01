@@ -17,6 +17,10 @@ model Product {
   createdAt DateTime @default(now())
 
   movements StockMovement[]
+  saleItems SaleItem[]
+
+  storeId String
+  store   Store @relation(fields: [storeId], references: [id])
 }
 
 model StockMovement {
@@ -32,4 +36,46 @@ model StockMovement {
 enum MovementType {
   IN
   OUT
+}
+
+model Sale {
+  id        String   @id @default(uuid())
+  total     Float
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  createdAt DateTime @default(now())
+
+  items     SaleItem[]
+}
+
+model SaleItem {
+  id        String   @id @default(uuid())
+  saleId    String
+  productId String
+  quantity  Int
+  price     Float
+
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users     User[]
+  products  Product[]
+  sales     Sale[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  storeId   String
+  createdAt DateTime @default(now())
+
+  store     Store    @relation(fields: [storeId], references: [id])
 }
