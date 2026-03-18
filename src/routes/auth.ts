@@ -46,8 +46,11 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     const user = await prisma.user.findUnique({
-      where: { email }
-    });
+  where: { email }
+});
+
+// força TS reconhecer role (caso cache)
+const role = (user as any).role;
 
     if (!user) {
       return res.status(400).json({ error: "Usuário não encontrado" });
@@ -60,10 +63,14 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user.id, storeId: user.storeId },
-      JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+  {
+    userId: user.id,
+    storeId: user.storeId,
+    role: user.role
+  },
+  JWT_SECRET,
+  { expiresIn: "1d" }
+);
 
     return res.json({ token });
 

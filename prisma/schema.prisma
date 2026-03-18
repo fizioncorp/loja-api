@@ -90,9 +90,18 @@ model User {
   storeId   String
   createdAt DateTime @default(now())
 
+  role      UserRole @default(CAIXA)
+
   store         Store           @relation(fields: [storeId], references: [id])
   StockMovement StockMovement[]
 }
+
+enum UserRole {
+  ADMIN
+  GERENTE
+  CAIXA
+}
+
 
 model CashRegister {
   id       String    @id @default(uuid())

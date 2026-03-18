@@ -10,6 +10,7 @@ router.post(
   "/",
   authMiddleware,
   async (req: AuthRequest, res) => {
+
     try {
 
       const { productId, type, quantity } = req.body;
@@ -26,17 +27,42 @@ router.post(
         return res.status(404).json({ error: "Produto não encontrado" });
       }
 
-      const newStock =
-        type === "IN"
-          ? product.stock + quantity
-          : product.stock - quantity;
+      const result = await prisma.$transaction(async (tx) => {
 
-      if (newStock < 0) {
-        return res.status(400).json({ error: "Estoque insuficiente" });
-      }
+        if (type === "IN") {
 
-      const result = await prisma.$transaction([
-        prisma.stockMovement.create({
+          await tx.product.update({
+            where: { id: productId },
+            data: {
+              stock: {
+                increment: quantity
+              }
+            }
+          });
+
+        } else {
+
+          const updated = await tx.product.updateMany({
+            where: {
+              id: productId,
+              stock: {
+                gte: quantity
+              }
+            },
+            data: {
+              stock: {
+                decrement: quantity
+              }
+            }
+          });
+
+          if (updated.count === 0) {
+            throw new Error("Estoque insuficiente");
+          }
+
+        }
+
+        const movement = await tx.stockMovement.create({
           data: {
             productId,
             storeId: req.user!.storeId,
@@ -44,32 +70,48 @@ router.post(
             type,
             quantity
           }
-        }),
-        prisma.product.update({
-          where: { id: productId },
-          data: { stock: newStock }
-        })
-      ]);
+        });
+
+        return movement;
+
+      });
 
       return res.json(result);
 
-    } catch (error) {
+    } catch (error: any) {
+
       console.error(error);
 
       return res.status(500).json({
-        error: "Erro na movimentação"
+        error: error.message || "Erro na movimentação"
       });
+
     }
+
   }
 );
 
-router.get("/", async (req, res) => {
-  const movements = await prisma.stockMovement.findMany({
-    include: { product: true },
-    orderBy: { createdAt: "asc" }
-  });
+// Listar movimentações
+router.get(
+  "/",
+  authMiddleware,
+  async (req: AuthRequest, res) => {
 
-  return res.json(movements);
-});
+    const movements = await prisma.stockMovement.findMany({
+      where: {
+        storeId: req.user!.storeId
+      },
+      include: {
+        product: true
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    });
+
+    return res.json(movements);
+
+  }
+);
 
 export default router;

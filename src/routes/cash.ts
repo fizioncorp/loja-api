@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
+import { requireRole } from "../middleware/role";
+
 
 const router = Router();
 
@@ -42,6 +44,7 @@ router.post(
 router.post(
   "/close",
   authMiddleware,
+  requireRole("ADMIN", "GERENTE"),
   async (req: AuthRequest, res) => {
     try {
       // Buscar caixa aberto da loja
@@ -242,6 +245,76 @@ router.post(
       console.error(error);
       return res.status(500).json({ error: "Erro ao registrar suprimento" });
     }
+  }
+);
+
+router.get(
+  "/report",
+  authMiddleware,
+  async (req: AuthRequest, res) => {
+
+    try {
+
+      const cash = await prisma.cashRegister.findFirst({
+        where: {
+          storeId: req.user!.storeId,
+          closedAt: null
+        }
+      });
+
+      if (!cash) {
+        return res.status(404).json({
+          error: "Nenhum caixa aberto"
+        });
+      }
+
+      const movements = await prisma.cashMovement.findMany({
+        where: {
+          cashId: cash.id
+        }
+      });
+
+      let deposits = 0;
+      let withdraws = 0;
+
+      for (const m of movements) {
+
+        if (m.type === "DEPOSIT") {
+          deposits += Number(m.amount);
+        }
+
+        if (m.type === "WITHDRAW") {
+          withdraws += Number(m.amount);
+        }
+
+      }
+
+      const expectedCash =
+        Number(cash.initial) +
+        Number(cash.sales) +
+        deposits -
+        withdraws;
+
+      return res.json({
+        cashId: cash.id,
+        initial: cash.initial,
+        sales: cash.sales,
+        deposits,
+        withdraws,
+        expectedCash,
+        openedAt: cash.openedAt
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      return res.status(500).json({
+        error: "Erro ao gerar relatório de caixa"
+      });
+
+    }
+
   }
 );
 
