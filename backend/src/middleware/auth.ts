@@ -4,7 +4,7 @@
 // NextFunction -> função usada para passar o controle para o próximo middleware
 import { Request, Response, NextFunction } from "express";
 
-// Importa a biblioteca jsonwebtoken para criação e validação de JWT
+// Importa a biblioteca jsonwebtoken para criação e validação de JWT autenticação
 import jwt from "jsonwebtoken";
 
 // Chave secreta usada para validar o token JWT
