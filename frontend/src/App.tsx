@@ -9,7 +9,7 @@ export function App() {
 
         <Input placeholder="Digite algo..." />
 
-        <Button>Clique aqui para iniciar </Button>
+        <Button> Clique aqui </Button>
       </div>
     </div>
   );
