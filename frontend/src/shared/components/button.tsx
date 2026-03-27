@@ -1,17 +1,22 @@
-interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+import type { ButtonHTMLAttributes } from "react";
 
-// Botão padrão do sistema
+interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {}
+
 export function Button({ children, ...rest }: Props) {
   return (
     <button
       className="
         w-full
-        bg-blue-600
+        rounded-2xl
+        bg-sky-500
+        px-4
+        py-3
+        font-medium
         text-white
-        p-2
-        rounded
-        hover:bg-blue-700
         transition
+        hover:bg-sky-400
+        disabled:cursor-not-allowed
+        disabled:opacity-70
       "
       {...rest}
     >

@@ -1,13 +1,16 @@
 import axios from "axios";
+import {
+  clearStoredSession,
+  getStoredToken,
+  notifyUnauthorized,
+} from "@/features/auth/utils/session";
 
-// Instância padrão da API
 export const api = axios.create({
-  baseURL: "http://localhost:3000", // ajuste se necessário
+  baseURL: "http://localhost:3000",
 });
 
-// Interceptor → envia token automaticamente
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getStoredToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -15,3 +18,15 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearStoredSession();
+      notifyUnauthorized();
+    }
+
+    return Promise.reject(error);
+  },
+);
